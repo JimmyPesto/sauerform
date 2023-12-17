@@ -1,0 +1,43 @@
+# Initial server setup only perfomed once after new server is instanciated
+# * creation of a (passwordless) sudo user
+# * some really basic ssh hardening
+- hosts: game_servers
+  remote_user: root  # ???
+  become: false
+  gather_facts: false  # No login before testing ssh access
+  tasks:
+    - name: Print hello to ssh user
+      debug:
+        msg: "Moin user {{ ansible_ssh_user }}"  
+    # inspired by https://serverfault.com/questions/840156/create-non-root-user-and-disable-root-ssh-in-ansible
+    - name: Check ansible user
+      command: ssh -n -q -o BatchMode=yes -o ConnectTimeout=3 -o StrictHostKeyChecking=no -o ExitOnForwardFailure=yes {{ created_username }}@{{ inventory_hostname }} 'true'
+      delegate_to: 127.0.0.1
+      changed_when: false
+      failed_when: false
+      register: check_ansible_user
+    - name: Act on success
+      debug:
+        msg: "SSH login using {{ created_username }} user was successful"
+      when: check_ansible_user.rc == 0
+    - block:
+      - name: Act on failure
+        debug:
+          msg: "SSH login using {{ created_username }} failed, we need to run base setup to create the user"
+      - name: Create new user
+        include_role:
+            name: base
+      when: check_ansible_user.rc != 0
+
+
+
+
+- hosts: game_servers
+  # remote_user: "{{ created_username }}"  ToDo remove?
+  vars:
+    # after previously making sure initial setup is done, we will now use our non root user
+    ansible_ssh_user: "{{ created_username }}"
+  become: true
+  roles:
+    - role: ssh-hardening
+    - role: sauerbraten

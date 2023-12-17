@@ -1,0 +1,13 @@
+# This file is managed by Terraform
+# if you edit this manually, changes might be overwritten
+# for persistent changes edit terraform/templates/inventory.tmpl
+game_servers:
+ hosts:
+   ${ip} 
+ vars:
+   ansible_ssh_user: root
+   ansible_ssh_private_key_file: ${ssh_private_key_file}
+   ansible_ssh_public_key_file: ${ssh_public_key_file}
+   ansible_port: 22
+   created_username: cube
+  

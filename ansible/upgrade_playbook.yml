@@ -1,0 +1,11 @@
+- hosts: all
+  vars:
+    # after previously making sure initial setup is done, we will now use our non root user
+    ansible_ssh_user: "{{ created_username }}"
+  become: true
+  tasks:
+  - name: Update and upgrade apt packages
+    apt:
+      upgrade: yes
+      update_cache: yes
+      cache_valid_time: 86400 #One day

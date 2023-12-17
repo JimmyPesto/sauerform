@@ -1,0 +1,43 @@
+---
+- name: Check if Docker is installed
+  stat:
+    path: /usr/bin/docker
+  register: docker_check
+
+- name: Fail if Docker is not installed
+  fail:
+    msg: "Docker is not installed on the remote server"
+  when: not docker_check.stat.exists
+
+- name: Allow user to run Docker without sudo
+  command: sudo gpasswd -a $USER docker
+
+- name: Create server directory
+  ansible.builtin.file:
+    path: /opt/sauerbraten/
+    state: directory
+
+- name: Check user provided configuration server-ini.cfg
+  stat:
+    path: "{{ role_path }}/../../../sauerbraten/server-init.cfg"
+  register: server_ini_check
+
+- name: Fail if user did not provide server-ini.cfg
+  fail:
+    msg: "Please create your own flavoured game server config at sauerbraten/server-ini.cfg"
+  when: not server_ini_check
+
+- name: Copy server config
+  copy:
+    src: "{{ role_path }}/../../../sauerbraten/server-init.cfg"
+    dest: /opt/sauerbraten/server-init.cfg
+
+- name: Copy Docker Compose file
+  copy:
+    src: "{{ role_path }}/../../../sauerbraten/docker-compose.yml"
+    dest: /opt/sauerbraten/docker-compose.yml
+
+- name: Start Sauebraten Game Server
+  command: docker compose up -d
+  args:
+    chdir: /opt/sauerbraten

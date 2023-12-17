@@ -1,0 +1,21 @@
+---
+- name: Update SSH server configuration
+  # Attention: this regex can mess up your configuration
+  # src: https://stackoverflow.com/a/65261020
+  lineinfile:
+    path: "/etc/ssh/sshd_config"
+    regex: "^(#)?{{item.key}}"
+    line: "{{item.key}} {{item.value}}"
+    state: present
+  loop:
+    - { key: "PermitRootLogin", value: "no" }
+    - { key: "PasswordAuthentication", value: "no" } 
+    - { key: "PermitEmptyPasswords", value: "no" } 
+    - { key: "ChallengeResponseAuthentication", value: "no" } 
+    - { key: "X11Forwarding", value: "no" } 
+    - { key: "MaxAuthTries", value: "4" } 
+  notify:
+    - Restart sshd service
+# ToDo enhance configuration
+# https://blog.weltraumschaf.de/blog/Hardening-Your-SSHd-with-Ansible/
+
